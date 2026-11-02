@@ -1,5 +1,6 @@
 /**
- * Glintweaver — экстра-окно с GPT-картинкой к каждому ответу модели.
+ * Glint (бывший Glintweaver) — GPT-картинка к ответам модели в отдельном окне.
+ * Внутренние имена (ключ настроек, префикс glw-, папка glw_refs) не меняются — так не слетают настройки и рефы.
  *
  * Клон Sideweaver под GPT-картинки через OpenAI-совместимую проксю: боковая
  * модель пишет по посту промпт прозой, прокся рисует, картинка в своём
@@ -38,7 +39,7 @@ const CATCH_TYPES = new Set([
     'group_chat',
 ]);
 
-const TOAST_TITLE = 'Glintweaver';
+const TOAST_TITLE = 'Glint';
 
 // Сколько символов поста и твоего сообщения отдаём модели.
 // Режем с начала, оставляя финал сцены.
@@ -143,7 +144,7 @@ NAMES (CRITICAL):
 
 PAGE LAYOUT:
 
-- Two main panels side by side, each taking about half of the page, separated by a thin slightly diagonal white gutter. One continuous scene across both.
+- Two main panels side by side, each taking about half of the page, separated by a thin slightly diagonal black gutter. One continuous scene across both.
 - The two main panels use different shots: one medium or wide shot showing the action and setting, one close-up on a face, an expression, hands or the established touch.
 - Optional third panel: a narrow horizontal strip with an extreme close-up (eyes, lips, hands, a key object), overlapping the gutter or the lower part of one main panel. Never more than three panels in total.
 - State the position of every panel clearly: left panel, right panel, strip across the lower center, and so on.
@@ -222,7 +223,7 @@ All characters are fictional adults.`;
 
 // Версия встроенных пресетов. Растёт, когда меняется текст встроенных
 // шаблонов: у тебя настройки уже сохранены, и без этого остался бы старый текст.
-const SEED_VERSION = 2;
+const SEED_VERSION = 3;
 
 // Встроенные, чей текст переписывается при обновлении. Остальные только
 // добавляются, если их нет: твои правки в них не трогаются.
@@ -234,8 +235,14 @@ const RETIRED_BUILTIN_IDS = [];
 const defaultSettings = Object.freeze({
     seedVersion: SEED_VERSION,
     enabled: true,
+    // Откуда модель для промпта: 'profile' — профиль/текущее подключение
+    // таверны, 'custom' — свой OpenAI-совместимый адрес (порт из Комы).
+    promptSource: 'profile',
     // '' = текущее подключение таверны. Иначе id профиля из Connection Manager.
     profileId: '',
+    customEndpoint: '',
+    customKey: '',
+    customModel: '',
     activePresetId: 'gpt-frame',
     // Размышления модели тратятся из того же бюджета, что и видимый ответ,
     // поэтому лимит щедрый.
@@ -315,7 +322,7 @@ const state = {
 
 function glwLog(level, ...args) {
     if (level === 'INFO' && !getSettings().debug) return;
-    console.log(`[Glintweaver][${level}]`, ...args);
+    console.log(`[Glint][${level}]`, ...args);
 }
 
 /** Свободный id для пресета (из борда). */
@@ -722,6 +729,10 @@ async function requestModel(instruction, contextText, signal) {
         else instruction = `${instruction}\n\n${jailbreak}`;
     }
 
+    if (settings.promptSource === 'custom') {
+        return requestCustomEndpoint({ instruction, contextText, prefill, maxTokens }, signal);
+    }
+
     if (settings.profileId) {
         const messages = [
             { role: 'system', content: instruction },
@@ -753,6 +764,93 @@ async function requestModel(instruction, contextText, signal) {
         prefill,
     });
     return typeof raw === 'string' ? raw : String(raw?.content || raw?.text || raw || '');
+}
+
+// ─── Напрямую: свой OpenAI-совместимый адрес (порт из DS Comments) ─────────
+
+// Запрос не потоковый, так что это потолок на весь ответ целиком.
+const CUSTOM_TIMEOUT_MS = 300_000;
+// Что уходит в reasoning_effort при «Размышления: минимум». 'low' понимают
+// почти все OpenAI-совместимые прокси; 'minimal' — только часть моделей.
+const CUSTOM_REASONING_MIN = 'low';
+
+/** Адрес как в комментах: можно с /v1 или полным до /chat/completions. */
+function normalizeCustomEndpoint(raw) {
+    let url;
+    try {
+        url = new URL(String(raw || '').trim());
+    } catch {
+        return null;
+    }
+    if (url.protocol !== 'https:' && url.protocol !== 'http:') return null;
+    const path = url.pathname.replace(/\/+$/, '');
+    if (/\/chat\/completions$/i.test(path)) return url.origin + path;
+    if (/\/v1$/i.test(path)) return `${url.origin}${path}/chat/completions`;
+    return `${url.origin}/v1/chat/completions`;
+}
+
+/** Достаёт текст из ответа (OpenAI, Claude-подобный, Gemini) — как в комментах. */
+function extractCustomText(data) {
+    if (!data) return '';
+    if (typeof data === 'string') return data;
+    const fromBlocks = (blocks) => blocks.filter(b => b?.type === 'text' && typeof b.text === 'string').map(b => b.text).join('\n');
+    const choice = data.choices?.[0]?.message?.content;
+    if (typeof choice === 'string') return choice;
+    if (Array.isArray(choice)) return fromBlocks(choice);
+    if (typeof data.content === 'string') return data.content;
+    if (Array.isArray(data.content)) return fromBlocks(data.content);
+    const parts = data.candidates?.[0]?.content?.parts;
+    if (Array.isArray(parts)) return parts.filter(p => typeof p?.text === 'string' && !p.thought).map(p => p.text).join('');
+    if (typeof data.text === 'string') return data.text;
+    return '';
+}
+
+/**
+ * Прямой запрос из браузера. Шлём то же, что уходит через профиль: лимит
+ * токенов и размышления. Адрес должен отдавать CORS-заголовки.
+ */
+async function requestCustomEndpoint({ instruction, contextText, prefill, maxTokens }, signal) {
+    const settings = getSettings();
+    const url = normalizeCustomEndpoint(settings.customEndpoint);
+    if (!url) throw new Error('Не указан адрес модели для промпта — загляни в «Модель для промпта».');
+
+    const messages = [
+        { role: 'system', content: instruction },
+        { role: 'user', content: contextText },
+    ];
+    if (prefill) messages.push({ role: 'assistant', content: prefill });
+    const body = { messages, stream: false, max_tokens: maxTokens };
+    const model = String(settings.customModel || '').trim();
+    if (model) body.model = model;
+    if (settings.reasoningEffort === 'min') body.reasoning_effort = CUSTOM_REASONING_MIN;
+
+    const headers = { 'Content-Type': 'application/json' };
+    const key = String(settings.customKey || '').trim();
+    if (key) headers.Authorization = `Bearer ${key}`;
+
+    const timeout = new AbortController();
+    let timedOut = false;
+    const onAbort = () => timeout.abort();
+    signal?.addEventListener('abort', onAbort, { once: true });
+    const timer = setTimeout(() => { timedOut = true; timeout.abort(); }, CUSTOM_TIMEOUT_MS);
+    glwLog('INFO', `Напрямую: ${url}, модель ${model || '(по умолчанию)'}`);
+
+    let response;
+    try {
+        response = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body), signal: timeout.signal });
+    } catch (error) {
+        if (timedOut) throw new Error(`Endpoint did not respond within ${CUSTOM_TIMEOUT_MS / 1000} s`);
+        if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
+        throw error;
+    } finally {
+        clearTimeout(timer);
+        signal?.removeEventListener('abort', onAbort);
+    }
+    if (!response.ok) {
+        const text = await response.text().catch(() => '');
+        throw new Error(`Endpoint HTTP ${response.status}${text ? `: ${text.slice(0, 300)}` : ''}`);
+    }
+    return extractCustomText(await response.json());
 }
 
 /** Срезает рассуждения, обёртку ``` и вступление модели («Okay, here is…»). */
@@ -1194,7 +1292,7 @@ async function runDraw(target) {
     const settings = getSettings();
     const missing = getMissingDrawSetting();
     if (missing) {
-        toastr.warning(`${missing} — загляни в настройки Glintweaver`, TOAST_TITLE, { timeOut: 4000 });
+        toastr.warning(`${missing} — загляни в настройки Glint`, TOAST_TITLE, { timeOut: 4000 });
         return;
     }
 
@@ -1628,7 +1726,7 @@ function openPromptExpanded() {
     overlay.innerHTML = `
         <div class="glw-popup glw-expand-popup" role="dialog" aria-label="Промпт">
             <div class="glw-popup-head">
-                <div class="glw-popup-title">⊹ Промпт #${escapeHtml(String(messageId))} ⊹</div>
+                <div class="glw-popup-title">「 Промпт #${escapeHtml(String(messageId))} 」</div>
                 <button class="glw-popup-x" type="button" aria-label="Закрыть"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="glw-expand-body">
@@ -2327,7 +2425,7 @@ function ensureLaunchers() {
                 bar.className = 'qr--button menu_button interactable glw-launcher';
                 bar.tabIndex = 0;
                 bar.setAttribute('role', 'button');
-                bar.title = 'Glintweaver';
+                bar.title = 'Glint';
                 bar.innerHTML = '<span aria-hidden="true">✨</span>';
                 bar.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); toggleWindowHidden(); });
                 bar.addEventListener('keydown', (e) => {
@@ -2364,7 +2462,7 @@ function buildFab() {
     const fab = document.createElement('div');
     fab.id = 'glw_fab';
     fab.className = 'glw-fab';
-    fab.title = 'Glintweaver';
+    fab.title = 'Glint';
     fab.setAttribute('role', 'button');
     fab.innerHTML = '<span aria-hidden="true">✨</span>';
     document.body.appendChild(fab);
@@ -2471,7 +2569,7 @@ function openPresetManager() {
     overlay.innerHTML = `
         <div class="glw-popup glw-presets" role="dialog" aria-label="Пресеты">
             <div class="glw-popup-head">
-                <div class="glw-popup-title">⊹ Пресеты ⊹</div>
+                <div class="glw-popup-title">「 Пресеты 」</div>
                 <button class="glw-popup-x" type="button" aria-label="Закрыть"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="glw-presets-cols">
@@ -2746,18 +2844,24 @@ function buildSettingsPanel() {
     const html = `
         <div id="glw_settings_root" class="inline-drawer">
             <div class="inline-drawer-toggle inline-drawer-header">
-                <b><i class="fa-solid fa-wand-magic-sparkles" style="margin-right: 6px;"></i>⊹ GLINTWEAVER ⊹</b>
+                <b><i class="fa-solid fa-wand-magic-sparkles" style="margin-right: 6px;"></i>「 GLINT 」</b>
                 <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
             </div>
             <div class="inline-drawer-content">
                 <div class="glw-settings">
-                    <p class="glw-intro">GPT-картинка к каждому ответу модели — в своём окне. Промпт пишет боковая модель, рисует GPT через OpenAI-совместимую проксю. Независим от Sideweaver и Frameweaver.</p>
+                    <p class="glw-intro">GPT-картинка к ответам модели — в отдельном окне. Промпт по посту пишет боковая модель, рисует GPT через OpenAI-совместимую проксю.</p>
 
                     <label class="checkbox_label">
                         <input type="checkbox" id="glw_enabled" ${settings.enabled ? 'checked' : ''}>
                         <span>Включено</span>
                     </label>
 
+                    <div class="glw-cat">
+                        <button type="button" class="glw-cat-head" aria-expanded="false">
+                            <span><i class="fa-solid fa-window-maximize fa-fw"></i> Окно и кнопка</span>
+                            <i class="fa-solid fa-chevron-down glw-cat-chevron"></i>
+                        </button>
+                        <div class="glw-cat-body" hidden>
                     <label for="glw_launcher_mode" class="glw-label">Кнопка вызова</label>
                     <select id="glw_launcher_mode" class="text_pole">
                         <option value="bar" ${settings.launcherMode === 'bar' ? 'selected' : ''}>В быстрых ответах</option>
@@ -2773,16 +2877,35 @@ function buildSettingsPanel() {
                         </label>
                         <div class="glw-hint" id="glw_auto_hint"></div>
                     </div>
+                        </div>
+                    </div>
 
-                    <label for="glw_profile" class="glw-label">Профиль подключения</label>
-                    <select id="glw_profile" class="text_pole"></select>
-                    <div class="glw-hint" id="glw_profile_hint">Пусто — используется текущее подключение таверны.</div>
+                    <div class="glw-cat">
+                        <button type="button" class="glw-cat-head" aria-expanded="false">
+                            <span><i class="fa-solid fa-plug fa-fw"></i> Модель для промпта</span>
+                            <i class="fa-solid fa-chevron-down glw-cat-chevron"></i>
+                        </button>
+                        <div class="glw-cat-body" hidden>
+                    <div class="glw-label">Источник</div>
+                    <div class="glw-seg" id="glw_source">
+                        <button type="button" class="glw-seg-btn ${settings.promptSource !== 'custom' ? 'active' : ''}" data-src="profile">Профиль</button>
+                        <button type="button" class="glw-seg-btn ${settings.promptSource === 'custom' ? 'active' : ''}" data-src="custom">Напрямую</button>
+                    </div>
 
-                    <label for="glw_preset" class="glw-label">Пресет шаблона</label>
-                    <select id="glw_preset" class="text_pole"></select>
-                    <div class="menu_button menu_button_icon" id="glw_manage_presets" style="margin-top: 6px;">
-                        <i class="fa-solid fa-sliders"></i>
-                        <span>Управление пресетами</span>
+                    <div id="glw_src_profile" ${settings.promptSource === 'custom' ? 'hidden' : ''}>
+                        <label for="glw_profile" class="glw-label">Профиль подключения</label>
+                        <select id="glw_profile" class="text_pole"></select>
+                        <div class="glw-hint" id="glw_profile_hint">Пусто — используется текущее подключение таверны.</div>
+                    </div>
+
+                    <div id="glw_src_custom" ${settings.promptSource === 'custom' ? '' : 'hidden'}>
+                        <label for="glw_custom_endpoint" class="glw-label">Endpoint URL</label>
+                        <input type="url" id="glw_custom_endpoint" class="text_pole" placeholder="https://api.example.com/v1" value="${escapeHtml(settings.customEndpoint)}">
+                        <label for="glw_custom_key" class="glw-label">API-ключ</label>
+                        <input type="password" id="glw_custom_key" class="text_pole" autocomplete="off" placeholder="sk-..." value="${escapeHtml(settings.customKey)}">
+                        <label for="glw_custom_model" class="glw-label">ID модели (необязательно)</label>
+                        <input type="text" id="glw_custom_model" class="text_pole" placeholder="по умолчанию у API" value="${escapeHtml(settings.customModel)}">
+                        <div class="glw-hint">Любой OpenAI-совместимый адрес, можно с /v1 или полным до /chat/completions. Профиль таверны не трогается.</div>
                     </div>
 
                     <label for="glw_max_tokens" class="glw-label">Лимит токенов ответа</label>
@@ -2794,7 +2917,22 @@ function buildSettingsPanel() {
                         <option value="min" ${settings.reasoningEffort === 'min' ? 'selected' : ''}>Минимум</option>
                         <option value="auto" ${settings.reasoningEffort === 'auto' ? 'selected' : ''}>На усмотрение модели</option>
                     </select>
-                    <div class="glw-hint">Работает только при выбранном профиле подключения.</div>
+                    <div class="glw-hint">Работает и с профилем, и напрямую.</div>
+                        </div>
+                    </div>
+
+                    <div class="glw-cat">
+                        <button type="button" class="glw-cat-head" aria-expanded="false">
+                            <span><i class="fa-solid fa-wrench fa-fw"></i> Шаблон</span>
+                            <i class="fa-solid fa-chevron-down glw-cat-chevron"></i>
+                        </button>
+                        <div class="glw-cat-body" hidden>
+                    <label for="glw_preset" class="glw-label">Пресет шаблона</label>
+                    <select id="glw_preset" class="text_pole"></select>
+                    <div class="menu_button menu_button_icon" id="glw_manage_presets" style="margin-top: 6px;">
+                        <i class="fa-solid fa-sliders"></i>
+                        <span>Управление пресетами</span>
+                    </div>
 
                     <label class="checkbox_label glw-section">
                         <input type="checkbox" id="glw_jb_enabled" ${settings.jailbreakEnabled ? 'checked' : ''}>
@@ -2812,9 +2950,15 @@ function buildSettingsPanel() {
                         <textarea id="glw_jb_text" class="text_pole glw-jb-text" rows="8" spellcheck="false">${escapeHtml(settings.jailbreakText)}</textarea>
                         <div class="glw-hint">Макросы таверны работают.</div>
                     </div>
+                        </div>
+                    </div>
 
-                    <div class="glw-group-title">GPT через проксю</div>
-
+                    <div class="glw-cat">
+                        <button type="button" class="glw-cat-head" aria-expanded="false">
+                            <span><i class="fa-solid fa-paintbrush fa-fw"></i> Рисование</span>
+                            <i class="fa-solid fa-chevron-down glw-cat-chevron"></i>
+                        </button>
+                        <div class="glw-cat-body" hidden>
                     <label for="glw_gpt_key" class="glw-label">Ключ</label>
                     <input type="password" id="glw_gpt_key" class="text_pole" autocomplete="off" value="${escapeHtml(settings.gptKey)}">
 
@@ -2846,8 +2990,15 @@ function buildSettingsPanel() {
                         <input type="checkbox" id="glw_random_aspect" ${settings.randomAspect ? 'checked' : ''}>
                         <span>🎲 Рандомная рамка</span>
                     </label>
+                        </div>
+                    </div>
 
-                    <div class="glw-group-title">Стили</div>
+                    <div class="glw-cat">
+                        <button type="button" class="glw-cat-head" aria-expanded="false">
+                            <span><i class="fa-solid fa-palette fa-fw"></i> Стили</span>
+                            <i class="fa-solid fa-chevron-down glw-cat-chevron"></i>
+                        </button>
+                        <div class="glw-cat-body" hidden>
                     <div id="glw_styles_list" class="glw-styles-list"></div>
                     <div class="glw-style-btns">
                         <div class="menu_button menu_button_icon" id="glw_style_add">
@@ -2858,17 +3009,37 @@ function buildSettingsPanel() {
                         </div>
                     </div>
                     <input type="file" id="glw_style_import_file" accept="application/json,.json" hidden>
+                        </div>
+                    </div>
 
+                    <div class="glw-cat">
+                        <button type="button" class="glw-cat-head" aria-expanded="false">
+                            <span><i class="fa-solid fa-bug fa-fw"></i> Отладка</span>
+                            <i class="fa-solid fa-chevron-down glw-cat-chevron"></i>
+                        </button>
+                        <div class="glw-cat-body" hidden>
                     <label class="checkbox_label glw-section">
                         <input type="checkbox" id="glw_debug" ${settings.debug ? 'checked' : ''}>
                         <span>Подробные логи в консоль</span>
                     </label>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>`;
 
     container.insertAdjacentHTML('beforeend', html);
     refreshPresetSelect();
+
+    // Категории сворачиваются, как в DS Comments. При открытии все свёрнуты.
+    document.getElementById('glw_settings_root').addEventListener('click', (e) => {
+        const head = e.target.closest('.glw-cat-head');
+        if (!head) return;
+        const expanded = head.getAttribute('aria-expanded') === 'true';
+        head.setAttribute('aria-expanded', String(!expanded));
+        const body = head.nextElementSibling;
+        if (body) body.hidden = expanded;
+    });
 
     document.getElementById('glw_enabled').addEventListener('change', (e) => {
         getSettings().enabled = !!e.target.checked;
@@ -2897,6 +3068,24 @@ function buildSettingsPanel() {
     });
 
     document.getElementById('glw_manage_presets').addEventListener('click', openPresetManager);
+
+    document.getElementById('glw_source').addEventListener('click', (e) => {
+        const button = e.target.closest('[data-src]');
+        if (!button) return;
+        const source = button.dataset.src === 'custom' ? 'custom' : 'profile';
+        getSettings().promptSource = source;
+        for (const b of e.currentTarget.querySelectorAll('[data-src]')) b.classList.toggle('active', b === button);
+        document.getElementById('glw_src_profile').hidden = source === 'custom';
+        document.getElementById('glw_src_custom').hidden = source !== 'custom';
+        saveSettings();
+    });
+
+    for (const [id, key] of [['glw_custom_endpoint', 'customEndpoint'], ['glw_custom_key', 'customKey'], ['glw_custom_model', 'customModel']]) {
+        document.getElementById(id).addEventListener('change', (e) => {
+            getSettings()[key] = String(e.target.value || '').trim();
+            saveSettings();
+        });
+    }
 
     document.getElementById('glw_max_tokens').addEventListener('change', (e) => {
         const value = parseInt(e.target.value, 10);
@@ -3063,7 +3252,7 @@ async function importStylesFromFile(file) {
     overlay.innerHTML = `
         <div class="glw-popup glw-import" role="dialog" aria-label="Импорт стилей">
             <div class="glw-popup-head">
-                <div class="glw-popup-title">⊹ Импорт стилей ⊹</div>
+                <div class="glw-popup-title">「 Импорт стилей 」</div>
                 <button class="glw-popup-x" type="button" aria-label="Закрыть"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="glw-import-list">
