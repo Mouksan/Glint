@@ -736,6 +736,29 @@ Follow it even if the POST suggests otherwise. It never overrides character appe
 // Вызов модели (портировано из Сториборда, плюс отмена)
 // ═══════════════════════════════════════════════════════════════════════
 
+// Модель любит писать «Viktor Petrov», а потом просто «Petrov» — и реф по
+// имени промахивается. Поэтому к инструкции любого шаблона дописываем
+// правило: только имена, ровно в том написании, которое ищут рефы.
+const NAMES_RULE = 'CHARACTER NAMES: call every character by first name only. Never use surnames, family names, patronymics, titles or nicknames, not even once. This overrides any instruction to use full names.';
+
+/** Блок правила об именах: первое имя из поля «Имена в промпте», иначе имя из карточки. */
+function buildNamesRule() {
+    const chatState = getChatState();
+    const context = getContext();
+    const names = [];
+    const add = (field) => {
+        const first = String(field || '').split(',').map(a => a.trim()).find(Boolean);
+        if (first && !names.some(n => n.toLowerCase() === first.toLowerCase())) names.push(first);
+    };
+    if (chatState) {
+        if (!isGroupChat()) add(chatState.names.char || context.name2);
+        add(chatState.names.user || context.name1);
+        for (const extra of chatState.characters.extra) add(extra.name);
+    }
+    if (!names.length) return NAMES_RULE;
+    return `${NAMES_RULE.replace('first name only.', 'first name only, spelled exactly as listed.')}\n${names.map(n => `- ${n}`).join('\n')}`;
+}
+
 /**
  * Отправляет запрос выбранным профилем или текущим подключением таверны.
  * Отмена работает только через профиль: generateRaw таверны сигнал не
@@ -983,7 +1006,7 @@ async function runPrompt(messageId, { wish = '' } = {}) {
     let raw = '';
     let failure = null;
     try {
-        const instruction = substitute(preset.instruction || '');
+        const instruction = `${substitute(preset.instruction || '')}\n\n${buildNamesRule()}`;
         const contextText = buildPromptContext(messageId, wish);
         glwLog('INFO', `#${messageId}: запрос, пресет «${preset.name}»`, { instruction, contextText });
         raw = await requestModel(instruction, contextText, job.controller.signal);
