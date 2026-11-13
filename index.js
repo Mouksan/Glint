@@ -202,6 +202,135 @@ FINAL CHECK:
 
 Two main panels plus an optional strip, positions stated, never more than three. Every panel names its characters. Appearance described once, consistent across panels. One or two named chibi in a corner. Every character looks inside the scene. Speech optional and short. Romantic intimacy stays non-explicit. No forbidden words. Maximum 350 words. The output is exactly ASPECT and PROMPT.`;
 
+// ─── Фото-коллажи (твои GPT-промпты) ────────────────────────────────────
+// Тексты дословно, кроме обвязки Глинта (формат ответа, SOURCES, имена)
+// и 3:4 → 2:3: вертикальная рамка у GPT-image 1024×1536. Рамка залочена
+// (lockAspect) — ни модель, ни кубик её не перебивают.
+
+const GPT_COLLAGE_HEAD = `You write ONE image prompt for a GPT image model that illustrates the POST below.
+
+OUTPUT FORMAT (strict): the two parts below and nothing else. No roleplay text, no HTML, no markdown, no explanation.
+ASPECT: portrait
+PROMPT:
+the final prompt itself, starting on the next line.
+
+${GPT_SOURCES}
+
+NAMES: start each character's description with their name, and use the name (never a descriptor like "the man") everywhere after it.`;
+
+const GPT_DOODLE_COLLAGE_INSTRUCTION = `${GPT_COLLAGE_HEAD}
+
+PHOTO COLLAGE WITH HAND-DRAWN DOODLES, vertical 2:3 canvas, black only as thin even gutters between frames. Visualize the latest roleplay message (the POST) as a comic-style page: 2 candid photographs plus one music-player card, in a STRICT fixed layout.
+
+=== YOUR JOB ===
+Write ONE final image-generation prompt (140-240 words, one paragraph: Big frame..., Small frame..., Player..., Doodles...). Then append the STYLE SUFFIX and NEGATIVE verbatim.
+
+=== LAYOUT (strict, do not change) ===
+All three frames are perfectly straight rectangles with softly rounded corners, separated by thin even black gutters. Almost no empty black space.
+- BIG FRAME: the whole top, full width, 2/3 of the canvas height.
+- Bottom third, split in two:
+  - SMALL FRAME: bottom left, 2/3 of the bottom row width, full height of the row.
+  - MUSIC PLAYER CARD: bottom right corner, the remaining 1/3 of the row width, full height of the row (a tall narrow vertical card).
+
+=== COMIC LOGIC ===
+BIG FRAME = the brightest, most expressive moment of the scene (the key interaction or emotional peak), face and upper body clearly visible.
+SMALL FRAME = clarifies that moment: a reaction, a gesture, or a telling detail of the action (a hand on fabric, a held object, an expression, a small thing that carries the atmosphere), always with a character in it.
+Both frames share the same location, light and color grade.
+
+=== PHOTO LOOK ===
+Realistic candid photography, like a real camera or phone shot: natural light, true-to-life skin with pores and sheen, real fabric wrinkles, slight grain, shallow depth of field. All characters are real adults. Gaze goes at the partner, down, aside or closed, almost never into the lens. Close faces are welcome.
+
+=== ANATOMY (critical, follow strictly) ===
+Keep poses simple and physically readable. Max 2 characters per frame. Exactly two arms, two legs, five fingers per visible hand, natural proportions, correct neck and shoulder joins. Describe limbs explicitly (where each hand rests, torso lean, weight support). Avoid tangled limbs, interlaced fingers and hidden complex hands; if a pose is complicated, simplify it or crop so hands and feet stay out of frame. Never place doodles over hands or faces.
+
+=== CHARACTERS (consistency is critical) ===
+Describe each character ONCE from the context: age range, build, face, eyes, hair (color, length, style), skin tone, marks, jewelry. Repeat the SAME wording in both frames. Clothing is copied exactly from the context (garment, fabric, color, fit, wear, dampness, stains). Never change faces or outfits.
+
+=== LOCATION AND LIGHT ===
+Name the place with 2-3 tactile details and ONE light source (direction, color temperature, hardness, air texture), kept in both frames.
+
+=== MUSIC PLAYER CARD ===
+A vertical frosted-glass media-player card filling its slot, tinted to the scene's mood, over a softly blurred crop of the scene. Small album thumbnail, song title, artist, thin vertical progress bar with time, play/pause, previous, next. YOU choose a REAL song that fits the vibe of the scene (spelled correctly) and the glass tint from the scene's mood and palette. Title and artist are the ONLY readable text in the image.
+
+=== DOODLES ===
+Thin white hand-drawn doodles like pencil, gel pen or chalk: slightly wobbly, light, unfinished, with gaps. Use loose outlines tracing a character, object or body line like a sticker cut line, plus 3 to 6 small drawn figures and symbols that TELL THE SCENE (tiny sketch versions of the characters acting out the moment or reaction, small objects or creatures from the scene, music notes, stars, swirls of tension). Every doodle carries meaning tied to the scene. They overlap the photos and may cross frame edges and the player card. Mostly white line art, small solid-black accents allowed. No letters or words in doodles.
+
+=== STYLE SUFFIX (append verbatim) ===
+Realistic candid photographs with natural color grading, anatomically correct people, correct hands with five fingers, natural proportions, comic-style layout of three straight rounded-corner frames with thin black gutters: one large photo on top two thirds, one smaller photo bottom left, one vertical frosted glass music-player card bottom right, thin white pencil-style hand-drawn doodles and loose outlines layered over, vertical 2:3.
+
+=== NEGATIVE (append verbatim) ===
+Avoid: bad anatomy, distorted anatomy, deformed body, extra limbs, extra arms, extra legs, missing limbs, extra fingers, missing fingers, fused fingers, mutated hands, malformed hands, twisted wrists, broken joints, long neck, disproportionate body, duplicated body, merged bodies, tangled limbs, plastic skin, airbrushed skin, doll face, 3D render, CGI, blurry, low quality, flat lighting, muddy colors, watermark, logo, captions, speech bubbles, readable text in doodles, thick colorful doodles, filled colored drawings, tilted frames, polaroid borders, wide empty black areas, thick gutters, more than 3 frames, more than one music player, objects without characters, empty room, characters looking into the camera, inconsistent faces, changing outfits.`;
+
+const GPT_Y2K_COLLAGE_INSTRUCTION = `${GPT_COLLAGE_HEAD}
+
+=== YOUR JOB ===
+Fill in the TEMPLATE below and output it as the final prompt. Replace every [bracketed part] with concrete details from the context: one CHAR line per character in the scene (CHAR A, CHAR B, and so on), the LOCATION, and P1, P2, P3 as three different story moments from the POST. Copy every other line verbatim and keep the section headings.
+SUBTITLE: pick ONE short line of direct speech from the POST (up to 8 words), verbatim in Russian, in «guillemets». If the POST has no direct speech, drop the subtitle sentence from LAYOUT and write "No text in the image." instead.
+
+=== TEMPLATE ===
+3-PANEL Y2K PHOTO COLLAGE: One large photo and two smaller overlapping photos, vertical 2:3. Photorealistic live-action photography, soft and dreamy.
+LAYOUT:
+P1 fills the entire canvas edge to edge, no white background, no background behind the panels. Thick black asymmetrical frame inset from the edges. P2 overlaps the top-right corner, P3 overlaps the bottom-left. Thin black borders and subtle soft shadows. No extra decorations. One short Russian subtitle in warm yellow serif font at the bottom, spelled exactly: «[the line]».
+CHARACTER & SCENE LOCK:
+CHAR A: [name, appearance, hair, exact outfit, distinguishing features]
+CHAR B: [name, appearance, hair, exact outfit, distinguishing features]
+LOCATION: [place, time, weather, details]
+Maintain consistent faces, outfits, lighting and props across all panels.
+CAMERA VARIETY:
+Every panel has a distinct camera angle, distance, composition and focal subject.
+Mix wide shots, low/high angles, profiles, over-the-shoulder views, back views, full-body movement, candid two-shots and object details. Avoid repetitive close-ups and identical framing.
+P1: [main action, wide or full-body]
+P2: [interaction or important detail]
+P3: [final reaction or a different story beat]
+Natural gazes, nobody looks into the camera.
+SOFTNESS & SMOOTHING (CRITICAL):
+Shot through a soft diffusion filter (Black Pro-Mist 1/4 look) on a vintage soft-focus lens: gentle bloom around highlights, soft glow, edges slightly softened, no crisp outlines.
+Low micro-contrast and low clarity: smooth tonal transitions, lifted shadows with visible soft detail, gentle highlight roll-off, soft matte contrast curve. Dark areas are dark brown or warm grey, never crushed black.
+Skin: soft, smooth, beautifully retouched in a natural way, even tone, fine pores visible only as a faint soft texture, no visible individual pores, no sharp skin detail. Wet or damp skin has a soft diffused sheen, not hard specular glints or sharp droplets.
+Hair: soft, silky, with delicate light strands, no crunchy individual hairs.
+Fabric, wood and metal are rendered softly, without sharp texture or edge enhancement. Background falls off into a smooth creamy blur.
+Light is soft and wrapped around the subjects: lantern and flash only as gentle warm glow with feathered shadows.
+Overall rendering: gentle, creamy, slightly dreamy, like a soft-focus film portrait.
+REALISM:
+Natural anatomy, realistic body proportions, believable movement and weight, physical contact, fabric and hair physics, natural expressions, realistic hands with 5 fingers.
+SOFT Y2K AESTHETIC:
+Early-2000s glossy magazine and compact digital camera photography. Warm luminous skin, soft peach-pink tones, delicate flash, pastel-candy colors, subtle magenta undertones and gentle highlights. Minimal barely visible grain. All panels share the same soft color grading and rendering.`;
+
+const GPT_FLOWER_COLLAGE_INSTRUCTION = `${GPT_COLLAGE_HEAD}
+
+HYPERREALISTIC PHOTO COLLAGE, vertical 2:3 canvas, dark tabletop background. Visualize the ENTIRE latest roleplay message (the POST) as 3 to 5 printed photographs in story order (never fewer than 3, never more than 5).
+
+=== YOUR JOB ===
+Write ONE final image-generation prompt (150-260 words, one paragraph: Frame 1..., Frame 2...). Then append the STYLE SUFFIX and NEGATIVE verbatim.
+
+=== LOOK ===
+Hyperrealism with a real camera feel: full-frame camera, 50-85mm lens, shallow depth of field, natural film grain, soft halation. Real skin with visible pores, natural sheen, flyaway strands, no retouching. All characters are real adults.
+
+=== CHARACTER CLOTHING ===
+Clothing: copy exactly from the context. Never invent a new outfit. Mention hair or body changes only if the scene caused them.
+
+=== PHOTO EDGES (same for ALL frames) ===
+Every frame is a physical printed photo with ONE consistent border style: either a very thin polaroid-like white margin, or a torn paper edge. Pick one, use it on every frame. Photos overlap each other slightly at the edges, tilted 1-3 degrees, with soft contact shadows, like prints laid on top of each other. No hard grid, no black gutters.
+
+=== FRAMES ===
+Pick the BRIGHTEST moments, not a summary. Unequal sizes, one dominant frame (40-50%). Mix: key moment, close-up of faces or touch between characters, extreme close-up (eyes, lips, hands on fabric), atmosphere frame with a small interactive detail, optional wide shot. Every frame has a character in action and adds a new event or posture. Faces may be close and detailed. Gaze at the partner, down, aside or closed, almost never into the lens.
+Per frame: body position, torso angle, hand placement, gaze target, distance between characters, one expression detail.
+
+=== LOCATION AND LIGHT ===
+Name the place with 3 tactile details, same place in all frames. Pick ONE light logic (source, color temperature, direction, shadows, air: haze, steam, rain) and keep it in every frame. Moody, uneven, no beauty lighting.
+
+=== FLOWERS ===
+2 to 5 real photographed flowers cut out like stickers, overlapping frame edges and corners. You choose species and color from the scene's mood (tender: pale lilies, peonies; night: blue, violet; passion: deep red; warm: peach, orange; gothic: black, burgundy; playful: tulips, daisies).
+
+=== MUSIC PLAYER ===
+ONE small frosted matte glass music-player widget overlapping the edge of two photos: rounded rectangle, small album thumbnail, song title and artist, thin progress bar with time, play/pause, previous, next. You choose BOTH a real song that fits the scene's vibe (spelled correctly) and the glass tint from the scene's mood and palette. Title and artist are the only readable text in the image.
+
+=== STYLE SUFFIX (append verbatim) ===
+Hyperrealistic photograph look, full-frame camera, 85mm f/1.8, cinematic color grading matched to the scene's light, natural film grain, subtle halation, realistic skin and fabric texture, shallow depth of field, moody intimate atmosphere, collage of overlapping printed photos with thin consistent borders, cut-out flowers, one frosted glass music-player widget, vertical 2:3.
+
+=== NEGATIVE (append verbatim) ===
+Avoid: plastic skin, airbrushed skin, anime, manga, manhwa, cartoon, illustration, painting, drawing, 3D render, CGI, doll face, distorted anatomy, extra fingers, mutated hands, extra limbs, bad proportions, blurry, low quality, flat lighting, grey haze, yellow tint, muddy colors, overexposed, watermark, logo, captions, speech bubbles, extra text, different border styles, thick borders, black gutters, equal grid, more than one music player, more than 5 flowers, objects without characters, empty room, characters looking into the camera, inconsistent faces, changing outfits.`;
+
 const APPEARANCE_INSTRUCTION = `You write a short FIXED APPEARANCE note for an image model.
 
 Using only the CHARACTER CARD and USER PERSONA below, describe the permanent physical appearance of the character named in TARGET in plain English, 2-4 sentences: sex, adult age, species, build and height, skin tone, face, hair color, length and style, eye color, and distinctive traits (scars, tattoos, piercings, horns, animal ears, tail, fins). Describe non-human anatomy exactly.
@@ -223,7 +352,7 @@ All characters are fictional adults.`;
 
 // Версия встроенных пресетов. Растёт, когда меняется текст встроенных
 // шаблонов: у тебя настройки уже сохранены, и без этого остался бы старый текст.
-const SEED_VERSION = 3;
+const SEED_VERSION = 4;
 
 // Встроенные, чей текст переписывается при обновлении. Остальные только
 // добавляются, если их нет: твои правки в них не трогаются.
@@ -290,6 +419,10 @@ const defaultSettings = Object.freeze({
     presets: [
         { id: 'gpt-frame', name: 'GPT — кадр', builtIn: true, instruction: GPT_FRAME_INSTRUCTION },
         { id: 'gpt-comic', name: 'GPT — комикс', builtIn: true, instruction: GPT_COMIC_INSTRUCTION },
+        // lockAspect: рамка пресета, которую не перебивают ни модель, ни кубик, ни «рамка по умолчанию».
+        { id: 'gpt-doodle-collage', name: 'GPT — коллаж с дудлами', builtIn: true, lockAspect: 'portrait', instruction: GPT_DOODLE_COLLAGE_INSTRUCTION },
+        { id: 'gpt-y2k-collage', name: 'GPT — Y2K-коллаж', builtIn: true, lockAspect: 'portrait', instruction: GPT_Y2K_COLLAGE_INSTRUCTION },
+        { id: 'gpt-flower-collage', name: 'GPT — фото с цветами', builtIn: true, lockAspect: 'portrait', instruction: GPT_FLOWER_COLLAGE_INSTRUCTION },
     ],
 });
 
@@ -1027,7 +1160,10 @@ async function runPrompt(messageId, { wish = '' } = {}) {
     }
 
     glwLog('INFO', `#${messageId}: сырой ответ:`, raw);
-    const { aspect, prompt, refused } = parsePromptOutput(raw);
+    const parsed = parsePromptOutput(raw);
+    const { prompt, refused } = parsed;
+    const aspectLocked = ASPECTS.includes(preset.lockAspect);
+    const aspect = aspectLocked ? preset.lockAspect : parsed.aspect;
     if (refused) {
         await writeSwipeData(target, { status: 'refused' });
         toastr.error('Модель отказалась. Включи джейлбрейк или смени модель', TOAST_TITLE, { timeOut: 6000 });
@@ -1043,6 +1179,7 @@ async function runPrompt(messageId, { wish = '' } = {}) {
         status: 'prompt',
         prompt,
         aspect,
+        aspectLocked,
         presetName: preset.name,
         promptAt: Date.now(),
         wish,
@@ -1138,8 +1275,10 @@ function composeFinalPrompt(prompt, style) {
     return styleText ? `${styleText}\n\n${body}` : body;
 }
 
-function pickAspect(modelAspect) {
+function pickAspect(modelAspect, locked = false) {
     const settings = getSettings();
+    // Залоченную пресетом рамку не перебивают ни кубик, ни «рамка по умолчанию».
+    if (locked && ASPECTS.includes(modelAspect)) return modelAspect;
     if (settings.randomAspect) return ASPECTS[Math.floor(Math.random() * ASPECTS.length)];
     return ASPECTS.includes(modelAspect) ? modelAspect : (settings.defaultAspect || 'landscape');
 }
@@ -1363,7 +1502,7 @@ async function runDraw(target) {
     state.drawJobs.set(target.key, job);
 
     const style = getActiveStyle();
-    const aspect = pickAspect(data.aspect);
+    const aspect = pickAspect(data.aspect, !!data.aspectLocked);
     const folder = getUploadFolderName();
     const finalPrompt = composeFinalPrompt(data.prompt, style);
     const model = String(settings.gptModel || '').trim();
@@ -2021,7 +2160,7 @@ function renderMainView() {
     promptEl.textContent = data?.prompt || '';
 
     const meta = [];
-    if (hasPrompt && data.aspect) meta.push(`рамка: ${data.aspect}`);
+    if (hasPrompt && data.aspect) meta.push(`рамка: ${data.aspect}${data.aspectLocked ? ' 🔒' : ''}`);
     if (hasPrompt && data.presetName) meta.push(`пресет: ${data.presetName}`);
     if (hasPrompt && data.edited) meta.push('правлено вручную');
     if (hasPrompt && data.wish) meta.push(`пожелание: ${data.wish}`);
