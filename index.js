@@ -262,7 +262,7 @@ Realistic candid photographs with natural color grading, anatomically correct pe
 Avoid: bad anatomy, distorted anatomy, deformed body, extra limbs, extra arms, extra legs, missing limbs, extra fingers, missing fingers, fused fingers, mutated hands, malformed hands, twisted wrists, broken joints, long neck, disproportionate body, duplicated body, merged bodies, tangled limbs, plastic skin, airbrushed skin, doll face, 3D render, CGI, blurry, low quality, flat lighting, muddy colors, watermark, logo, captions, speech bubbles, readable text in doodles, thick colorful doodles, filled colored drawings, tilted frames, polaroid borders, wide empty black areas, thick gutters, more than 3 frames, more than one music player, objects without characters, empty room, characters looking into the camera, inconsistent faces, changing outfits.`;
 
 // «Дудлы с чиби» — коллаж с дудлами без плеера: 2-3 кадра на выбор модели
-// и необязательный чибик-стикер: чистый контур, белая вырубка, бледная заливка.
+// и необязательный чибик — дудл той же белой ручкой, наспех раскрашенный пастелью.
 const GPT_DOODLE_CHIBI_INSTRUCTION = `${GPT_COLLAGE_HEAD}
 
 PHOTO COLLAGE WITH HAND-DRAWN DOODLES, vertical 2:3 canvas, black only as thin even gutters between frames. Visualize the latest roleplay message (the POST) as a comic-style page of 2 or 3 candid photographs.
@@ -300,14 +300,14 @@ Thin white hand-drawn doodles like pencil, gel pen or chalk: slightly wobbly, li
 
 === CHIBI (optional, your call) ===
 Add ONE chibi only when the scene has a clear emotion worth exaggerating (embarrassment, jealousy, smugness, panic, sulking, giddy joy); skip it for a neutral scene.
-The chibi is one of the named characters, named in the prompt. Draw it as a cute digital sticker, not a sketch: clean smooth confident outlines (unlike the wobbly doodles), a white sticker cut-line border around the whole figure, flat pale fill — white or a very light tint of the character's own hair and outfit colors — with tiny soft pastel accents only where they carry the emotion (light blue tears, pink blush, a small pastel sparkle). No shading, no gradients, no dark fill. Big head, tiny body, recognizable hair, ears/antennae and outfit silhouette, an exaggerated anime reaction (squeezed crying eyes, wide wailing mouth, hands pressed to cheeks, steam puffs, spiral eyes, a sulky pout).
+The chibi is one of the named characters, named in the prompt. It is a DOODLE, drawn by the same hand and pen as the other doodles: simple white hand-drawn line art, a bit bigger and more careful than the tiny figures but still a quick doodle, not a finished illustration. It is loosely colored in, like a doodle filled with a few pastel markers: mostly white, flat pale tints of the character's own hair and outfit colors, and small brighter pastel touches only where they carry the emotion (light blue tears, pink blush). Flat fills only — no shading, no highlights, no gradients, no thick sticker border, no detailed rendering. Big head, tiny body, recognizable hair, ears/antennae and outfit silhouette, an exaggerated reaction (squeezed crying eyes, wide wailing mouth, hands pressed to cheeks, steam puffs, spiral eyes, a sulky pout).
 It sits in a lower corner, partly overlapping a frame edge, never over a face or hand. Only the chibi is stylized; the photos stay realistic.
 
 === STYLE SUFFIX (append verbatim) ===
-Realistic candid photographs with natural color grading, anatomically correct people, correct hands with five fingers, natural proportions, comic-style layout of two or three straight rounded-corner frames with thin black gutters, one large photo on the top two thirds, thin white pencil-style hand-drawn doodles and loose outlines layered over, an optional cute pastel chibi sticker with a white cut-line border in a lower corner, vertical 2:3.
+Realistic candid photographs with natural color grading, anatomically correct people, correct hands with five fingers, natural proportions, comic-style layout of two or three straight rounded-corner frames with thin black gutters, one large photo on the top two thirds, thin white pencil-style hand-drawn doodles and loose outlines layered over, an optional loosely colored white-line chibi doodle in a lower corner, vertical 2:3.
 
 === NEGATIVE (append verbatim) ===
-Avoid: bad anatomy, distorted anatomy, deformed body, extra limbs, extra arms, extra legs, missing limbs, extra fingers, missing fingers, fused fingers, mutated hands, malformed hands, twisted wrists, broken joints, long neck, disproportionate body, duplicated body, merged bodies, tangled limbs, plastic skin, airbrushed skin, doll face, 3D render, CGI, blurry, low quality, flat lighting, muddy colors, watermark, logo, captions, speech bubbles, any readable text, music player, thick colorful doodles, filled colored drawings, sketchy or scratchy chibi, dark or fully black-and-white chibi, shaded chibi, cartoon-styled photos, tilted frames, polaroid borders, wide empty black areas, thick gutters, more than 3 frames, objects without characters, empty room, characters looking into the camera, inconsistent faces, changing outfits.`;
+Avoid: bad anatomy, distorted anatomy, deformed body, extra limbs, extra arms, extra legs, missing limbs, extra fingers, missing fingers, fused fingers, mutated hands, malformed hands, twisted wrists, broken joints, long neck, disproportionate body, duplicated body, merged bodies, tangled limbs, plastic skin, airbrushed skin, doll face, 3D render, CGI, blurry, low quality, flat lighting, muddy colors, watermark, logo, captions, speech bubbles, any readable text, music player, thick colorful doodles, filled colored drawings, sketchy or scratchy chibi, dark or fully black-and-white chibi, shaded chibi, polished anime illustration chibi, sticker with thick border, detailed rendered chibi, cartoon-styled photos, tilted frames, polaroid borders, wide empty black areas, thick gutters, more than 3 frames, objects without characters, empty room, characters looking into the camera, inconsistent faces, changing outfits.`;
 
 const GPT_Y2K_COLLAGE_INSTRUCTION = `${GPT_COLLAGE_HEAD}
 
@@ -400,7 +400,7 @@ All characters are fictional adults.`;
 
 // Версия встроенных пресетов. Растёт, когда меняется текст встроенных
 // шаблонов: у тебя настройки уже сохранены, и без этого остался бы старый текст.
-const SEED_VERSION = 6;
+const SEED_VERSION = 7;
 
 // Встроенные, чей текст переписывается при обновлении. Остальные только
 // добавляются, если их нет: твои правки в них не трогаются.
