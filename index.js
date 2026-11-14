@@ -262,14 +262,14 @@ Realistic candid photographs with natural color grading, anatomically correct pe
 Avoid: bad anatomy, distorted anatomy, deformed body, extra limbs, extra arms, extra legs, missing limbs, extra fingers, missing fingers, fused fingers, mutated hands, malformed hands, twisted wrists, broken joints, long neck, disproportionate body, duplicated body, merged bodies, tangled limbs, plastic skin, airbrushed skin, doll face, 3D render, CGI, blurry, low quality, flat lighting, muddy colors, watermark, logo, captions, speech bubbles, readable text in doodles, thick colorful doodles, filled colored drawings, tilted frames, polaroid borders, wide empty black areas, thick gutters, more than 3 frames, more than one music player, objects without characters, empty room, characters looking into the camera, inconsistent faces, changing outfits.`;
 
 // «Дудлы с чиби» — коллаж с дудлами без плеера: 2-3 кадра на выбор модели
-// и необязательный чибик: строка-шаблон без слова «chibi» (оно тянет стикер) —
-// мягкие сиренево-серые линии прямо по фото, белая заливка, пастель только на эмоции.
+// и необязательный чибик белой линией, в стиле остальных дудлов (первый текст,
+// на котором вышел удачный мотылёк); подкрашены только эмоции.
 const GPT_DOODLE_CHIBI_INSTRUCTION = `${GPT_COLLAGE_HEAD}
 
 PHOTO COLLAGE WITH HAND-DRAWN DOODLES, vertical 2:3 canvas, black only as thin even gutters between frames. Visualize the latest roleplay message (the POST) as a comic-style page of 2 or 3 candid photographs.
 
 === YOUR JOB ===
-Write ONE final image-generation prompt (140-240 words, one paragraph: Layout..., Big frame..., Bottom frame(s)..., Doodles..., the corner caricature line if used). Then append the STYLE SUFFIX and NEGATIVE verbatim.
+Write ONE final image-generation prompt (140-240 words, one paragraph: Layout..., Big frame..., Bottom frame(s)..., Doodles..., Chibi... if used). Then append the STYLE SUFFIX and NEGATIVE verbatim.
 
 === LAYOUT (choose one, then state it exactly) ===
 All frames are perfectly straight rectangles with softly rounded corners, separated by thin even black gutters. Almost no empty black space.
@@ -288,7 +288,7 @@ All frames share the same location, light and color grade.
 Realistic candid photography, like a real camera or phone shot: natural light, true-to-life skin with pores and sheen, real fabric wrinkles, slight grain, shallow depth of field. All characters are real adults. Gaze goes at the partner, down, aside or closed, almost never into the lens. Close faces are welcome.
 
 === ANATOMY (critical, follow strictly) ===
-Keep poses simple and physically readable. Max 2 characters per frame. Exactly two arms, two legs, five fingers per visible hand, natural proportions, correct neck and shoulder joins. Describe limbs explicitly (where each hand rests, torso lean, weight support). Avoid tangled limbs, interlaced fingers and hidden complex hands; if a pose is complicated, simplify it or crop so hands and feet stay out of frame. Never place doodles or the caricature over hands or faces.
+Keep poses simple and physically readable. Max 2 characters per frame. Exactly two arms, two legs, five fingers per visible hand, natural proportions, correct neck and shoulder joins. Describe limbs explicitly (where each hand rests, torso lean, weight support). Avoid tangled limbs, interlaced fingers and hidden complex hands; if a pose is complicated, simplify it or crop so hands and feet stay out of frame. Never place doodles or the chibi over hands or faces.
 
 === CHARACTERS (consistency is critical) ===
 Describe each character ONCE from the context: age range, build, face, eyes, hair (color, length, style), skin tone, marks, jewelry. Repeat the SAME wording in every frame. Clothing is copied exactly from the context (garment, fabric, color, fit, wear, dampness, stains). Never change faces or outfits.
@@ -297,20 +297,18 @@ Describe each character ONCE from the context: age range, build, face, eyes, hai
 Name the place with 2-3 tactile details and ONE light source (direction, color temperature, hardness, air texture), kept in all frames.
 
 === DOODLES ===
-Thin white hand-drawn doodles, all drawn with one white gel pen: slightly wobbly, light, unfinished, with gaps. Use loose outlines tracing a character, object or body line like a loose traced cut line, plus 3 to 6 small drawn figures and symbols that TELL THE SCENE (tiny sketch versions of the characters acting out the moment or reaction, small objects or creatures from the scene, stars, swirls of tension, hearts, sweat drops, anger marks). Every doodle carries meaning tied to the scene. They overlap the photos and may cross frame edges. Mostly white line art, small solid-black accents allowed. No letters or words in doodles.
+Thin white hand-drawn doodles like pencil, gel pen or chalk: slightly wobbly, light, unfinished, with gaps. Use loose outlines tracing a character, object or body line like a sticker cut line, plus 3 to 6 small drawn figures and symbols that TELL THE SCENE (tiny sketch versions of the characters acting out the moment or reaction, small objects or creatures from the scene, stars, swirls of tension, hearts, sweat drops, anger marks). Every doodle carries meaning tied to the scene. They overlap the photos and may cross frame edges. Mostly white line art, small solid-black accents allowed. No letters or words in doodles.
 
-=== CORNER CARICATURE (optional, your call) ===
-Add ONE small big-headed caricature of a character (a chibi) only when the scene has a clear emotion worth exaggerating (embarrassment, jealousy, smugness, panic, sulking, giddy joy); skip it for a neutral scene.
-If you add it, copy this line into the prompt VERBATIM, replacing only the three [bracketed] parts:
-"In the lower [left/right] corner, drawn right on the photo with soft lavender-grey pastel lines (never black), with a thin white glow around the figure: a cute tiny big-headed doodle of [NAME] [reaction], filled in solid white with a white paint marker, so the whole figure glows white on the photo like chalk. The figure is recognizable only by line: hair shape, ears or antennae, outfit silhouette — do NOT color it in the character's real hair, skin or outfit colors. Only one or two tiny pastel accents where they carry the emotion (light blue tears, pink blush, a tiny tint on one key detail). Soft, light, slightly wobbly lines, as cute and loose as the other doodles, no border, no outline halo, not a sticker, not a finished illustration."
-[reaction] is a short exaggerated pose and face (e.g. stomping with squeezed furious eyes and steam puffs; wailing with stream tears and hands on cheeks). Pick the corner where it covers no face or hand.
-Never write the word "chibi" in the prompt itself — it makes the image model draw a polished sticker.
+=== CHIBI (optional, your call) ===
+Add ONE chibi only when the scene has a clear emotion worth exaggerating (embarrassment, jealousy, smugness, panic, sulking, giddy joy); skip it for a neutral scene.
+The chibi is one of the named characters, named in the prompt, drawn in the SAME thin white hand-drawn line as the doodles, just bigger and more detailed than the small figures: big head, tiny body, recognizable hair and outfit silhouette, an exaggerated reaction (blush, tears, spiral eyes, steam puffs, sparkles, a sulky pout). White line art, white figure; only the emotion is softly colored in pale pastel (light blue tears, pink blush), nothing else colored, no shading.
+It sits in a lower corner, partly overlapping a frame edge, never over a face or hand. Only the chibi is stylized; the photos stay realistic.
 
 === STYLE SUFFIX (append verbatim) ===
-Realistic candid photographs with natural color grading, anatomically correct people, correct hands with five fingers, natural proportions, comic-style layout of two or three straight rounded-corner frames with thin black gutters, one large photo on the top two thirds, thin white pencil-style hand-drawn doodles and loose outlines layered over, an optional cute tiny big-headed doodle drawn right on the photo in soft lavender-grey lines, filled white, with tiny pastel accents, in a lower corner, vertical 2:3.
+Realistic candid photographs with natural color grading, anatomically correct people, correct hands with five fingers, natural proportions, comic-style layout of two or three straight rounded-corner frames with thin black gutters, one large photo on the top two thirds, thin white pencil-style hand-drawn doodles and loose outlines layered over, an optional white line-art chibi in a lower corner, vertical 2:3.
 
 === NEGATIVE (append verbatim) ===
-Avoid: bad anatomy, distorted anatomy, deformed body, extra limbs, extra arms, extra legs, missing limbs, extra fingers, missing fingers, fused fingers, mutated hands, malformed hands, twisted wrists, broken joints, long neck, disproportionate body, duplicated body, merged bodies, tangled limbs, plastic skin, airbrushed skin, doll face, 3D render, CGI, blurry, low quality, flat lighting, muddy colors, watermark, logo, captions, speech bubbles, any readable text, music player, thick colorful doodles, heavy marker fills, sticker, die-cut sticker, white sticker border, chibi sticker art, polished anime illustration, shaded or rendered caricature, fully colored caricature, black outlines on the caricature, coloring-book line art, cartoon-styled photos, tilted frames, polaroid borders, wide empty black areas, thick gutters, more than 3 frames, objects without characters, empty room, characters looking into the camera, inconsistent faces, changing outfits.`;
+Avoid: bad anatomy, distorted anatomy, deformed body, extra limbs, extra arms, extra legs, missing limbs, extra fingers, missing fingers, fused fingers, mutated hands, malformed hands, twisted wrists, broken joints, long neck, disproportionate body, duplicated body, merged bodies, tangled limbs, plastic skin, airbrushed skin, doll face, 3D render, CGI, blurry, low quality, flat lighting, muddy colors, watermark, logo, captions, speech bubbles, any readable text, music player, thick colorful doodles, filled colored drawings, fully colored chibi, cartoon-styled photos, tilted frames, polaroid borders, wide empty black areas, thick gutters, more than 3 frames, objects without characters, empty room, characters looking into the camera, inconsistent faces, changing outfits.`;
 
 const GPT_Y2K_COLLAGE_INSTRUCTION = `${GPT_COLLAGE_HEAD}
 
@@ -403,7 +401,7 @@ All characters are fictional adults.`;
 
 // Версия встроенных пресетов. Растёт, когда меняется текст встроенных
 // шаблонов: у тебя настройки уже сохранены, и без этого остался бы старый текст.
-const SEED_VERSION = 10;
+const SEED_VERSION = 11;
 
 // Встроенные, чей текст переписывается при обновлении. Остальные только
 // добавляются, если их нет: твои правки в них не трогаются.
