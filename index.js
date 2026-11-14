@@ -263,7 +263,7 @@ Avoid: bad anatomy, distorted anatomy, deformed body, extra limbs, extra arms, e
 
 // «Дудлы с чиби» — коллаж с дудлами без плеера: 2-3 кадра на выбор модели
 // и необязательный чибик: строка-шаблон без слова «chibi» (оно тянет стикер) —
-// белая гелевая ручка прямо по фото, белая заливка, пастель только на эмоции.
+// мягкие сиренево-серые линии прямо по фото, белая заливка, пастель только на эмоции.
 const GPT_DOODLE_CHIBI_INSTRUCTION = `${GPT_COLLAGE_HEAD}
 
 PHOTO COLLAGE WITH HAND-DRAWN DOODLES, vertical 2:3 canvas, black only as thin even gutters between frames. Visualize the latest roleplay message (the POST) as a comic-style page of 2 or 3 candid photographs.
@@ -302,15 +302,15 @@ Thin white hand-drawn doodles, all drawn with one white gel pen: slightly wobbly
 === CORNER CARICATURE (optional, your call) ===
 Add ONE small big-headed caricature of a character (a chibi) only when the scene has a clear emotion worth exaggerating (embarrassment, jealousy, smugness, panic, sulking, giddy joy); skip it for a neutral scene.
 If you add it, copy this line into the prompt VERBATIM, replacing only the three [bracketed] parts:
-"In the lower [left/right] corner, drawn right on the photo with the same white gel pen as the other doodles: a tiny big-headed caricature doodle of [NAME] [reaction], filled in solid white with a white paint marker, so the whole figure glows white on the photo like chalk. The figure is recognizable only by line: hair shape, ears or antennae, outfit silhouette — do NOT color it in the character's real hair, skin or outfit colors. Only one or two tiny pastel accents where they carry the emotion (light blue tears, pink blush, a tiny tint on one key detail). Same thin slightly wobbly line as the other doodles, no border, no outline halo, not a sticker, not a finished illustration."
+"In the lower [left/right] corner, drawn right on the photo with soft lavender-grey pastel lines (never black), with a thin white glow around the figure: a cute tiny big-headed doodle of [NAME] [reaction], filled in solid white with a white paint marker, so the whole figure glows white on the photo like chalk. The figure is recognizable only by line: hair shape, ears or antennae, outfit silhouette — do NOT color it in the character's real hair, skin or outfit colors. Only one or two tiny pastel accents where they carry the emotion (light blue tears, pink blush, a tiny tint on one key detail). Soft, light, slightly wobbly lines, as cute and loose as the other doodles, no border, no outline halo, not a sticker, not a finished illustration."
 [reaction] is a short exaggerated pose and face (e.g. stomping with squeezed furious eyes and steam puffs; wailing with stream tears and hands on cheeks). Pick the corner where it covers no face or hand.
 Never write the word "chibi" in the prompt itself — it makes the image model draw a polished sticker.
 
 === STYLE SUFFIX (append verbatim) ===
-Realistic candid photographs with natural color grading, anatomically correct people, correct hands with five fingers, natural proportions, comic-style layout of two or three straight rounded-corner frames with thin black gutters, one large photo on the top two thirds, thin white pencil-style hand-drawn doodles and loose outlines layered over, an optional tiny big-headed caricature doodle drawn right on the photo in white gel pen, filled white, with tiny pastel accents, in a lower corner, vertical 2:3.
+Realistic candid photographs with natural color grading, anatomically correct people, correct hands with five fingers, natural proportions, comic-style layout of two or three straight rounded-corner frames with thin black gutters, one large photo on the top two thirds, thin white pencil-style hand-drawn doodles and loose outlines layered over, an optional cute tiny big-headed doodle drawn right on the photo in soft lavender-grey lines, filled white, with tiny pastel accents, in a lower corner, vertical 2:3.
 
 === NEGATIVE (append verbatim) ===
-Avoid: bad anatomy, distorted anatomy, deformed body, extra limbs, extra arms, extra legs, missing limbs, extra fingers, missing fingers, fused fingers, mutated hands, malformed hands, twisted wrists, broken joints, long neck, disproportionate body, duplicated body, merged bodies, tangled limbs, plastic skin, airbrushed skin, doll face, 3D render, CGI, blurry, low quality, flat lighting, muddy colors, watermark, logo, captions, speech bubbles, any readable text, music player, thick colorful doodles, heavy marker fills, sticker, die-cut sticker, white sticker border, chibi sticker art, polished anime illustration, shaded or rendered caricature, fully colored caricature, cartoon-styled photos, tilted frames, polaroid borders, wide empty black areas, thick gutters, more than 3 frames, objects without characters, empty room, characters looking into the camera, inconsistent faces, changing outfits.`;
+Avoid: bad anatomy, distorted anatomy, deformed body, extra limbs, extra arms, extra legs, missing limbs, extra fingers, missing fingers, fused fingers, mutated hands, malformed hands, twisted wrists, broken joints, long neck, disproportionate body, duplicated body, merged bodies, tangled limbs, plastic skin, airbrushed skin, doll face, 3D render, CGI, blurry, low quality, flat lighting, muddy colors, watermark, logo, captions, speech bubbles, any readable text, music player, thick colorful doodles, heavy marker fills, sticker, die-cut sticker, white sticker border, chibi sticker art, polished anime illustration, shaded or rendered caricature, fully colored caricature, black outlines on the caricature, coloring-book line art, cartoon-styled photos, tilted frames, polaroid borders, wide empty black areas, thick gutters, more than 3 frames, objects without characters, empty room, characters looking into the camera, inconsistent faces, changing outfits.`;
 
 const GPT_Y2K_COLLAGE_INSTRUCTION = `${GPT_COLLAGE_HEAD}
 
@@ -403,7 +403,7 @@ All characters are fictional adults.`;
 
 // Версия встроенных пресетов. Растёт, когда меняется текст встроенных
 // шаблонов: у тебя настройки уже сохранены, и без этого остался бы старый текст.
-const SEED_VERSION = 9;
+const SEED_VERSION = 10;
 
 // Встроенные, чей текст переписывается при обновлении. Остальные только
 // добавляются, если их нет: твои правки в них не трогаются.
