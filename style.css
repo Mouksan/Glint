@@ -324,7 +324,8 @@ textarea.glw-char-tags {
 }
 
 #glw_view_tags > .glw-btn { width: 100%; margin-top: 10px; }
-#glw_view_tags > .glw-btn.glw-btn-import { margin: 0 0 4px; }
+#glw_view_tags > .glw-import-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 4px; }
+#glw_view_tags > .glw-import-row > .glw-btn { flex: 1 1 140px; margin: 0; }
 
 /* Рефы */
 .glw-ref {
